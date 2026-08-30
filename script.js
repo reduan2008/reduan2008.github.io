@@ -1,5 +1,5 @@
 const GEMINI_API_KEY = "AIzaSyDono8rwct0hHqENwShDUHJRUPu8UK8aHI";
-const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
 const chatForm = document.getElementById("chat-form");
 const userInput = document.getElementById("user-input");
