@@ -3,11 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gemini Chat</title>
     <meta
       name="description"
-      content="Chat de IA para generar scripts Luau para Roblox usando Ollama local."
+      content="Chat moderno conectado a la API de Gemini."
     />
-    <title>Luau AI Generator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -19,69 +19,56 @@
   <body>
     <div class="app-shell">
       <aside class="sidebar">
-        <div class="sidebar-top">
-          <button id="new-chat-btn" class="new-chat-btn" type="button">+ Nuevo Chat</button>
+        <div class="sidebar-header">
+          <div class="brand">
+            <span class="brand-mark">✦</span>
+            <div>
+              <strong>Gemini Chat</strong>
+              <small>IA en la nube</small>
+            </div>
+          </div>
+          <button id="new-chat-button" class="new-chat-button" type="button">
+            + Nuevo chat
+          </button>
         </div>
 
-        <div class="sidebar-bottom">
-          <div id="status-indicator" class="status-indicator connected" aria-live="polite">
-            <span class="status-dot"></span>
-            <span id="status-text">Ollama Conectado</span>
+        <div class="history-panel">
+          <div class="history-header">Historial</div>
+          <div id="history-list" class="history-list">
+            <button class="history-item active" type="button">Chat actual</button>
           </div>
-
-          <button id="help-btn" class="help-btn" type="button">Ayuda / Configuración</button>
         </div>
       </aside>
 
-      <main class="chat-area">
+      <main class="chat-panel">
         <header class="chat-header">
-          <div class="chat-brand">
-            <span class="chat-badge">AI</span>
-            <div>
-              <p class="eyebrow">Roblox</p>
-              <h1>Asistente Luau</h1>
-            </div>
+          <div class="chat-header-title">
+            <span class="model-label">Modelo activo</span>
+            <strong id="active-model">gemini-flash-latest</strong>
           </div>
         </header>
 
-        <section id="chat-list" class="chat-list" aria-live="polite"></section>
+        <section id="messages" class="messages" aria-live="polite"></section>
 
-        <form id="chat-form" class="composer" autocomplete="off">
+        <div id="thinking-indicator" class="thinking-indicator hidden" aria-live="polite">
+          <span class="thinking-dot"></span>
+          <span>Pensando...</span>
+        </div>
+
+        <form id="chat-form" class="composer">
           <div class="composer-inner">
             <textarea
-              id="prompt-input"
+              id="user-input"
               rows="1"
-              placeholder="Pregúntame por un script de Roblox, GUI, sistema, módulo o script local..."
+              placeholder="Pregunta lo que quieras..."
+              aria-label="Escribe tu mensaje"
             ></textarea>
-            <button type="submit" class="send-btn">Enviar</button>
+            <button type="submit" class="send-button" aria-label="Enviar mensaje">
+              ➤
+            </button>
           </div>
         </form>
       </main>
-    </div>
-
-    <div id="help-modal" class="help-modal" aria-hidden="true">
-      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="help-title">
-        <div class="modal-header">
-          <h2 id="help-title">Configuración de Ollama</h2>
-          <button id="close-help" class="modal-close" type="button" aria-label="Cerrar">×</button>
-        </div>
-
-        <div class="modal-body">
-          <p>Para que la IA funcione desde tu ordenador, sigue estos pasos:</p>
-          <ol>
-            <li>Instala Ollama desde <a href="https://ollama.com" target="_blank" rel="noreferrer">ollama.com</a>.</li>
-            <li>Ejecuta este comando en tu terminal:
-              <pre>ollama run nutboy02/Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-uncenfull</pre>
-            </li>
-            <li>Inicia Ollama con CORS habilitado:
-              <pre>OLLAMA_ORIGINS="*" ollama serve</pre>
-            </li>
-            <li>En Windows PowerShell:
-              <pre>$env:OLLAMA_ORIGINS="*" ; ollama serve</pre>
-            </li>
-          </ol>
-        </div>
-      </div>
     </div>
 
     <script src="script.js"></script>

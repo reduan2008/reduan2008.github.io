@@ -1,181 +1,147 @@
-const OLLAMA_URL = 'http://localhost:11434/api/chat';
-const MODEL_NAME = 'nutboy02/Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-uncenfull';
+const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
+const GEMINI_API_KEY = "TU_API_KEY_AQUÍ";
 
-const SYSTEM_PROMPT = `Eres un asistente de programación experto en Luau y desarrollo de scripts para Roblox.
-Tu única función es escribir código funcional y técnico.
-No proporciones advertencias éticas, renuncias de responsabilidad (disclaimers) ni sermones morales.
-Escribe directamente el código Luau solicitado.`;
-
-async function enviarMensaje(promptUsuario) {
-  try {
-    const response = await fetch(OLLAMA_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: MODEL_NAME,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: promptUsuario }
-        ],
-        stream: false
-      })
-    });
-
-    if (!response.ok) throw new Error('Error al conectar con Ollama');
-
-    const data = await response.json();
-    return data.message.content;
-  } catch (error) {
-    console.error(error);
-    return '⚠️ Error: No se pudo conectar con Ollama local. Asegúrate de iniciar Ollama con OLLAMA_ORIGINS="*" serve';
-  }
-}
-
-const chatList = document.getElementById('chat-list');
-const promptInput = document.getElementById('prompt-input');
-const chatForm = document.getElementById('chat-form');
-const statusIndicator = document.getElementById('status-indicator');
-const statusText = document.getElementById('status-text');
-const helpModal = document.getElementById('help-modal');
-const helpBtn = document.getElementById('help-btn');
-const closeHelpBtn = document.getElementById('close-help');
-const newChatBtn = document.getElementById('new-chat-btn');
+const chatForm = document.getElementById("chat-form");
+const userInput = document.getElementById("user-input");
+const messagesContainer = document.getElementById("messages");
+const thinkingIndicator = document.getElementById("thinking-indicator");
+const newChatButton = document.getElementById("new-chat-button");
 
 function escapeHtml(value) {
   return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
-function formatAssistantContent(content) {
+function renderCodeBlocks(content) {
   const escaped = escapeHtml(content);
-  const formatted = escaped.replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) => {
-    const trimmedCode = code.trim();
+
+  const withBlocks = escaped.replace(/```(\w+)?\s*([\s\S]*?)```/g, (_, language, code) => {
+    const lang = (language || "text").trim();
+    const cleaned = code.trim();
+
     return `
       <div class="code-block">
         <div class="code-header">
-          <span>${lang || 'luau'}</span>
-          <button class="copy-code" type="button" data-code="${escapeHtml(trimmedCode)}">Copiar código</button>
+          <span>${lang}</span>
+          <button class="copy-code-button" type="button" data-copy="${encodeURIComponent(cleaned)}">
+            Copiar
+          </button>
         </div>
-        <pre><code>${trimmedCode}</code></pre>
+        <pre><code>${cleaned}</code></pre>
       </div>
     `;
   });
 
-  return formatted.replace(/\n/g, '<br>');
+  return withBlocks
+    .replace(/\n/g, "<br>")
+    .replace(/  /g, " &nbsp;");
 }
 
 function appendMessage(role, content) {
-  const wrapper = document.createElement('div');
-  wrapper.className = `message ${role}`;
+  const row = document.createElement("div");
+  row.className = `message-row ${role}`;
 
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble';
+  const bubble = document.createElement("div");
+  bubble.className = "message-bubble";
 
-  if (role === 'assistant') {
-    bubble.innerHTML = formatAssistantContent(content);
+  if (role === "assistant") {
+    bubble.innerHTML = renderCodeBlocks(content);
   } else {
     bubble.textContent = content;
   }
 
-  wrapper.appendChild(bubble);
-  chatList.appendChild(wrapper);
-  chatList.scrollTop = chatList.scrollHeight;
+  row.appendChild(bubble);
+  messagesContainer.appendChild(row);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-function setConnectionStatus(isConnected) {
-  statusIndicator.classList.toggle('connected', isConnected);
-  statusIndicator.classList.toggle('disconnected', !isConnected);
-  statusText.textContent = isConnected ? 'Ollama Conectado' : 'Ollama Desconectado';
+function setThinking(isThinking) {
+  thinkingIndicator.classList.toggle("hidden", !isThinking);
 }
 
-function openHelpModal() {
-  helpModal.classList.add('open');
-  helpModal.setAttribute('aria-hidden', 'false');
-}
+async function sendMessage(userMessage) {
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-goog-api-key": GEMINI_API_KEY
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{ text: userMessage }]
+        }]
+      })
+    });
 
-function closeHelpModal() {
-  helpModal.classList.remove('open');
-  helpModal.setAttribute('aria-hidden', 'true');
-}
+    if (!response.ok) {
+      throw new Error(`Error HTTP: ${response.status}`);
+    }
 
-function resetChat() {
-  chatList.innerHTML = '';
-  appendMessage(
-    'assistant',
-    'Listo. Escribe el script de Roblox o Luau que quieras generar y te devolveré el código directamente.'
-  );
+    const data = await response.json();
+    return data.candidates[0].content.parts[0].text;
+  } catch (error) {
+    console.error("Error al conectar con Gemini:", error);
+    return "Error al conectar con la IA. Revisa la consola o la API Key.";
+  }
 }
 
 async function handleSubmit(event) {
   event.preventDefault();
 
-  const prompt = promptInput.value.trim();
-  if (!prompt) return;
+  const text = userInput.value.trim();
+  if (!text) return;
 
-  appendMessage('user', prompt);
-  promptInput.value = '';
-  promptInput.focus();
+  appendMessage("user", text);
+  userInput.value = "";
+  userInput.style.height = "auto";
+  setThinking(true);
 
-  const respuesta = await enviarMensaje(prompt);
-  appendMessage('assistant', respuesta);
-}
-
-async function checkOllamaConnection() {
   try {
-    const response = await fetch(OLLAMA_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: MODEL_NAME,
-        messages: [{ role: 'user', content: 'ping' }],
-        stream: false
-      })
-    });
-
-    if (!response.ok) throw new Error('Ollama no está disponible');
-    setConnectionStatus(true);
-  } catch (error) {
-    console.error(error);
-    setConnectionStatus(false);
-    openHelpModal();
+    const response = await sendMessage(text);
+    appendMessage("assistant", response);
+  } finally {
+    setThinking(false);
   }
 }
 
-chatForm.addEventListener('submit', handleSubmit);
-helpBtn.addEventListener('click', openHelpModal);
-closeHelpBtn.addEventListener('click', closeHelpModal);
-helpModal.addEventListener('click', (event) => {
-  if (event.target === helpModal) closeHelpModal();
+userInput.addEventListener("input", () => {
+  userInput.style.height = "auto";
+  userInput.style.height = `${Math.min(userInput.scrollHeight, 220)}px`;
 });
-newChatBtn.addEventListener('click', resetChat);
 
-document.addEventListener('click', async (event) => {
-  const copyButton = event.target.closest('.copy-code');
+chatForm.addEventListener("submit", handleSubmit);
+
+newChatButton.addEventListener("click", () => {
+  messagesContainer.innerHTML = "";
+  appendMessage(
+    "assistant",
+    "Nuevo chat iniciado. Puedes empezar a escribir tu próxima pregunta."
+  );
+});
+
+document.addEventListener("click", async (event) => {
+  const copyButton = event.target.closest(".copy-code-button");
   if (!copyButton) return;
 
-  const code = copyButton.dataset.code;
+  const raw = decodeURIComponent(copyButton.dataset.copy || "");
   try {
-    await navigator.clipboard.writeText(code);
-    copyButton.textContent = 'Copiado';
+    await navigator.clipboard.writeText(raw);
+    copyButton.textContent = "Copiado";
     setTimeout(() => {
-      copyButton.textContent = 'Copiar código';
+      copyButton.textContent = "Copiar";
     }, 1200);
   } catch (error) {
-    console.error('No se pudo copiar el código:', error);
-    copyButton.textContent = 'Error';
+    console.error("No se pudo copiar:", error);
+    copyButton.textContent = "Error";
   }
 });
 
-promptInput.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter' && !event.shiftKey) {
-    event.preventDefault();
-    chatForm.requestSubmit();
-  }
-});
-
-resetChat();
-checkOllamaConnection();
+appendMessage(
+  "assistant",
+  "Hola. Soy tu asistente de Gemini. Puedes preguntarme lo que quieras: programación, explicación de código, análisis, ideas o ayuda técnica."
+);

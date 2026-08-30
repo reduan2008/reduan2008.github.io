@@ -1,25 +1,13 @@
-# Roblox AI Script Generator
+# Gemini Chat
 
-Generador de scripts de Luau para Roblox basado en IA ejecutada localmente.
+Chat moderno conectado a la API de Google Gemini.
 
-## Requisitos para usar esta web
+## Requisitos
 
-Para que el chat pueda generar respuestas desde tu ordenador:
+1. Genera una clave API en Google AI Studio.
+2. Añade tu clave en la variable `GEMINI_API_KEY` dentro de `script.js`.
+3. Abre la web y comienza a chatear.
 
-1. Instala Ollama desde [ollama.com](https://ollama.com).
-2. Descarga el modelo ejecutando este comando en tu terminal:
-   ```bash
-   ollama run nutboy02/Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-uncenfull
-   ```
-3. Inicia el servidor de Ollama permitiendo las peticiones de la página web:
-   - Windows (PowerShell): `$env:OLLAMA_ORIGINS="*" ; ollama serve`
-   - Linux/Mac: `OLLAMA_ORIGINS="*" ollama serve`
-4. Entra a https://reduan2008.github.io y comienza a escribir prompts.
+## Descripción
 
-## Funcionalidad
-
-La web hace peticiones HTTP POST a `http://localhost:11434/api/chat` usando el modelo configurado por defecto:
-
-`nutboy02/Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-uncenfull`
-
-El sistema está preparado para responder con código Luau técnico y funcional para Roblox sin advertencias ni disclaimers.
+La interfaz está construida como un chat limpio y oscuro con diseño tipo ChatGPT/Claude. Las peticiones se hacen directamente a la API de Gemini usando la cabecera `X-goog-api-key`.
