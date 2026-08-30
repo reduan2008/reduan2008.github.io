@@ -1,5 +1,5 @@
-const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
-const GEMINI_API_KEY = "TU_API_KEY_AQUÍ";
+const GEMINI_API_KEY = "AQ.Ab8RN6I-Oq9M_9yNUuuhYjsyRiNiNIfH-dI5SJGVo9XFwA8Qyw";
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 const chatForm = document.getElementById("chat-form");
 const userInput = document.getElementById("user-input");
@@ -68,8 +68,7 @@ async function sendMessage(userMessage) {
     const response = await fetch(API_URL, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "X-goog-api-key": GEMINI_API_KEY
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         contents: [{
@@ -78,15 +77,17 @@ async function sendMessage(userMessage) {
       })
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error(`Error HTTP: ${response.status}`);
+      console.error("Detalle del error de Google Gemini:", data);
+      throw new Error(data.error?.message || `Error HTTP: ${response.status}`);
     }
 
-    const data = await response.json();
     return data.candidates[0].content.parts[0].text;
   } catch (error) {
     console.error("Error al conectar con Gemini:", error);
-    return "Error al conectar con la IA. Revisa la consola o la API Key.";
+    return `Error: ${error.message}`;
   }
 }
 
