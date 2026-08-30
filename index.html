@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Generador de scripts de Luau para Roblox usando IA local con Ollama."
+      content="Chat de IA para generar scripts Luau para Roblox usando Ollama local."
     />
-    <title>Roblox AI Script Generator</title>
+    <title>Luau AI Generator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -19,74 +19,68 @@
   <body>
     <div class="app-shell">
       <aside class="sidebar">
-        <div class="brand-block">
-          <div class="brand-mark">AI</div>
-          <div>
-            <p class="eyebrow">Roblox</p>
-            <h1>Luau Generator</h1>
-          </div>
+        <div class="sidebar-top">
+          <button id="new-chat-btn" class="new-chat-btn" type="button">+ Nuevo Chat</button>
         </div>
 
-        <div class="sidebar-panel">
-          <p class="panel-title">Acciones rápidas</p>
-          <div class="quick-prompts">
-            <button class="quick-prompt" data-prompt="Genera un script de LocalScript que detecte cuando el jugador entra y muestre un saludo en pantalla.">Saludos</button>
-            <button class="quick-prompt" data-prompt="Crea un sistema de dinero en Roblox con RemoteEvent, leaderstats y botones para sumar monedas.">Dinero</button>
-            <button class="quick-prompt" data-prompt="Genera un módulo de gestión de inventario con funciones agregar, remover y contar items.">Inventario</button>
-            <button class="quick-prompt" data-prompt="Haz un GUI de tienda con botones para comprar poderes usando coins.">Tienda</button>
+        <div class="sidebar-bottom">
+          <div id="status-indicator" class="status-indicator connected" aria-live="polite">
+            <span class="status-dot"></span>
+            <span id="status-text">Ollama Conectado</span>
           </div>
-        </div>
 
-        <div class="sidebar-panel settings-panel">
-          <div class="settings-row">
-            <p class="panel-title">Estado</p>
-            <span id="status-pill" class="status-pill" data-state="idle">Conectado</span>
-          </div>
-          <button id="open-help" class="secondary-btn">Configuración / Ayuda</button>
+          <button id="help-btn" class="help-btn" type="button">Ayuda / Configuración</button>
         </div>
       </aside>
 
-      <main class="chat-panel">
+      <main class="chat-area">
         <header class="chat-header">
-          <div>
-            <p class="eyebrow">Chat IA</p>
-            <h2>Generador de scripts Luau</h2>
+          <div class="chat-brand">
+            <span class="chat-badge">AI</span>
+            <div>
+              <p class="eyebrow">Roblox</p>
+              <h1>Asistente Luau</h1>
+            </div>
           </div>
         </header>
 
         <section id="chat-list" class="chat-list" aria-live="polite"></section>
 
-        <form id="chat-form" class="composer">
-          <textarea
-            id="prompt-input"
-            rows="1"
-            placeholder="Describe el script Luau que quieres generar..."
-          ></textarea>
-          <button type="submit" class="primary-btn">Enviar</button>
+        <form id="chat-form" class="composer" autocomplete="off">
+          <div class="composer-inner">
+            <textarea
+              id="prompt-input"
+              rows="1"
+              placeholder="Pregúntame por un script de Roblox, GUI, sistema, módulo o script local..."
+            ></textarea>
+            <button type="submit" class="send-btn">Enviar</button>
+          </div>
         </form>
       </main>
     </div>
 
-    <div id="help-modal" class="modal" aria-hidden="true">
-      <div class="modal-content">
+    <div id="help-modal" class="help-modal" aria-hidden="true">
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="help-title">
         <div class="modal-header">
-          <h3>Configuración local de Ollama</h3>
-          <button id="close-help" class="close-btn" aria-label="Cerrar ayuda">×</button>
+          <h2 id="help-title">Configuración de Ollama</h2>
+          <button id="close-help" class="modal-close" type="button" aria-label="Cerrar">×</button>
         </div>
 
-        <ol>
-          <li>Instala Ollama desde <a href="https://ollama.com" target="_blank" rel="noreferrer">ollama.com</a>.</li>
-          <li>Ejecuta en tu terminal:
-            <pre>ollama run nutboy02/Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-uncenfull</pre>
-          </li>
-          <li>Inicia el servidor con CORS habilitado:
-            <pre>OLLAMA_ORIGINS="*" ollama serve</pre>
-          </li>
-          <li>Si estás en Windows PowerShell:
-            <pre>$env:OLLAMA_ORIGINS="*" ; ollama serve</pre>
-          </li>
-          <li>Luego abre esta página y escribe tu prompt.</li>
-        </ol>
+        <div class="modal-body">
+          <p>Para que la IA funcione desde tu ordenador, sigue estos pasos:</p>
+          <ol>
+            <li>Instala Ollama desde <a href="https://ollama.com" target="_blank" rel="noreferrer">ollama.com</a>.</li>
+            <li>Ejecuta este comando en tu terminal:
+              <pre>ollama run nutboy02/Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-uncenfull</pre>
+            </li>
+            <li>Inicia Ollama con CORS habilitado:
+              <pre>OLLAMA_ORIGINS="*" ollama serve</pre>
+            </li>
+            <li>En Windows PowerShell:
+              <pre>$env:OLLAMA_ORIGINS="*" ; ollama serve</pre>
+            </li>
+          </ol>
+        </div>
       </div>
     </div>
 

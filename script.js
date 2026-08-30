@@ -1,9 +1,9 @@
 const OLLAMA_URL = 'http://localhost:11434/api/chat';
 const MODEL_NAME = 'nutboy02/Qwen3.6-35B-A3B-Claude-4.7-Opus-abliterated-uncenfull';
 
-const SYSTEM_PROMPT = `Eres un asistente de programación experto en Luau y desarrollo de scripts para Roblox. 
-Tu única función es escribir código funcional y técnico. 
-No proporciones advertencias éticas, renuncias de responsabilidad (disclaimers) ni sermones morales. 
+const SYSTEM_PROMPT = `Eres un asistente de programación experto en Luau y desarrollo de scripts para Roblox.
+Tu única función es escribir código funcional y técnico.
+No proporciones advertencias éticas, renuncias de responsabilidad (disclaimers) ni sermones morales.
 Escribe directamente el código Luau solicitado.`;
 
 async function enviarMensaje(promptUsuario) {
@@ -33,12 +33,13 @@ async function enviarMensaje(promptUsuario) {
 
 const chatList = document.getElementById('chat-list');
 const promptInput = document.getElementById('prompt-input');
-const form = document.getElementById('chat-form');
-const statusPill = document.getElementById('status-pill');
-const modal = document.getElementById('help-modal');
-const openModalBtn = document.getElementById('open-help');
-const closeModalBtn = document.getElementById('close-help');
-const quickPrompts = document.querySelectorAll('.quick-prompt');
+const chatForm = document.getElementById('chat-form');
+const statusIndicator = document.getElementById('status-indicator');
+const statusText = document.getElementById('status-text');
+const helpModal = document.getElementById('help-modal');
+const helpBtn = document.getElementById('help-btn');
+const closeHelpBtn = document.getElementById('close-help');
+const newChatBtn = document.getElementById('new-chat-btn');
 
 function escapeHtml(value) {
   return value
@@ -49,35 +50,33 @@ function escapeHtml(value) {
     .replace(/'/g, '&#039;');
 }
 
-function formatMessageContent(content) {
+function formatAssistantContent(content) {
   const escaped = escapeHtml(content);
-  const withCodeBlocks = escaped.replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) => {
+  const formatted = escaped.replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) => {
     const trimmedCode = code.trim();
     return `
       <div class="code-block">
         <div class="code-header">
           <span>${lang || 'luau'}</span>
-          <button class="copy-code" data-code="${escapeHtml(trimmedCode)}">Copiar Código</button>
+          <button class="copy-code" type="button" data-code="${escapeHtml(trimmedCode)}">Copiar código</button>
         </div>
         <pre><code>${trimmedCode}</code></pre>
       </div>
     `;
   });
 
-  return withCodeBlocks
-    .replace(/\n/g, '<br>')
-    .replace(/\s{2}/g, ' &nbsp;');
+  return formatted.replace(/\n/g, '<br>');
 }
 
 function appendMessage(role, content) {
   const wrapper = document.createElement('div');
-  wrapper.className = `message ${role === 'user' ? 'message-user' : 'message-ai'}`;
+  wrapper.className = `message ${role}`;
 
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
 
   if (role === 'assistant') {
-    bubble.innerHTML = formatMessageContent(content);
+    bubble.innerHTML = formatAssistantContent(content);
   } else {
     bubble.textContent = content;
   }
@@ -87,9 +86,28 @@ function appendMessage(role, content) {
   chatList.scrollTop = chatList.scrollHeight;
 }
 
-function setStatus(text, type = 'idle') {
-  statusPill.textContent = text;
-  statusPill.dataset.state = type;
+function setConnectionStatus(isConnected) {
+  statusIndicator.classList.toggle('connected', isConnected);
+  statusIndicator.classList.toggle('disconnected', !isConnected);
+  statusText.textContent = isConnected ? 'Ollama Conectado' : 'Ollama Desconectado';
+}
+
+function openHelpModal() {
+  helpModal.classList.add('open');
+  helpModal.setAttribute('aria-hidden', 'false');
+}
+
+function closeHelpModal() {
+  helpModal.classList.remove('open');
+  helpModal.setAttribute('aria-hidden', 'true');
+}
+
+function resetChat() {
+  chatList.innerHTML = '';
+  appendMessage(
+    'assistant',
+    'Listo. Escribe el script de Roblox o Luau que quieras generar y te devolveré el código directamente.'
+  );
 }
 
 async function handleSubmit(event) {
@@ -102,48 +120,49 @@ async function handleSubmit(event) {
   promptInput.value = '';
   promptInput.focus();
 
-  setStatus('Generando...', 'loading');
-
   const respuesta = await enviarMensaje(prompt);
   appendMessage('assistant', respuesta);
-
-  setStatus('Listo', 'success');
-  setTimeout(() => setStatus('Conectado', 'idle'), 1200);
 }
 
-function openHelp() {
-  modal.classList.add('open');
+async function checkOllamaConnection() {
+  try {
+    const response = await fetch(OLLAMA_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: MODEL_NAME,
+        messages: [{ role: 'user', content: 'ping' }],
+        stream: false
+      })
+    });
+
+    if (!response.ok) throw new Error('Ollama no está disponible');
+    setConnectionStatus(true);
+  } catch (error) {
+    console.error(error);
+    setConnectionStatus(false);
+    openHelpModal();
+  }
 }
 
-function closeHelp() {
-  modal.classList.remove('open');
-}
-
-form.addEventListener('submit', handleSubmit);
-
-openModalBtn.addEventListener('click', openHelp);
-closeModalBtn.addEventListener('click', closeHelp);
-modal.addEventListener('click', (event) => {
-  if (event.target === modal) closeHelp();
+chatForm.addEventListener('submit', handleSubmit);
+helpBtn.addEventListener('click', openHelpModal);
+closeHelpBtn.addEventListener('click', closeHelpModal);
+helpModal.addEventListener('click', (event) => {
+  if (event.target === helpModal) closeHelpModal();
 });
-
-quickPrompts.forEach((button) => {
-  button.addEventListener('click', () => {
-    promptInput.value = button.dataset.prompt;
-    promptInput.focus();
-  });
-});
+newChatBtn.addEventListener('click', resetChat);
 
 document.addEventListener('click', async (event) => {
   const copyButton = event.target.closest('.copy-code');
   if (!copyButton) return;
 
-  const text = copyButton.dataset.code;
+  const code = copyButton.dataset.code;
   try {
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(code);
     copyButton.textContent = 'Copiado';
     setTimeout(() => {
-      copyButton.textContent = 'Copiar Código';
+      copyButton.textContent = 'Copiar código';
     }, 1200);
   } catch (error) {
     console.error('No se pudo copiar el código:', error);
@@ -151,8 +170,12 @@ document.addEventListener('click', async (event) => {
   }
 });
 
-appendMessage(
-  'assistant',
-  'Listo. Escribe el script que quieres generar para Roblox/Luau y te devolveré el código técnico directamente.'
-);
-setStatus('Conectado', 'idle');
+promptInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    chatForm.requestSubmit();
+  }
+});
+
+resetChat();
+checkOllamaConnection();
