@@ -1,5 +1,5 @@
-const GEMINI_API_KEY = "AQ.Ab8RN6I-Oq9M_9yNUuuhYjsyRiNiNIfH-dI5SJGVo9XFwA8Qyw";
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_API_KEY = "AIzaSyDono8rwct0hHqENwShDUHJRUPu8UK8aHI";
+const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
 const chatForm = document.getElementById("chat-form");
 const userInput = document.getElementById("user-input");
@@ -68,7 +68,8 @@ async function sendMessage(userMessage) {
     const response = await fetch(API_URL, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "X-goog-api-key": GEMINI_API_KEY
       },
       body: JSON.stringify({
         contents: [{
@@ -80,14 +81,14 @@ async function sendMessage(userMessage) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("Detalle del error de Google Gemini:", data);
+      console.error("Error de la API:", data);
       throw new Error(data.error?.message || `Error HTTP: ${response.status}`);
     }
 
     return data.candidates[0].content.parts[0].text;
   } catch (error) {
     console.error("Error al conectar con Gemini:", error);
-    return `Error: ${error.message}`;
+    return `Error de conexión: ${error.message}`;
   }
 }
 
